@@ -12,6 +12,7 @@ import {
 
 import { CandidatesList, type CandidateRow } from "./candidates-list";
 import { ImportDialog } from "./import-dialog";
+import { NewCandidateDialog } from "./new-candidate-dialog";
 
 export default async function CandidatesPage({
   params,
@@ -53,6 +54,7 @@ export default async function CandidatesPage({
         icon={Users}
       >
         <ImportDialog slug={org.slug} />
+        <NewCandidateDialog slug={org.slug} />
       </PageHeader>
 
       {rows.length === 0 ? (
