@@ -3,7 +3,7 @@ import { Settings as SettingsIcon } from "lucide-react";
 import { requireOrgMembership } from "@/lib/supabase/org";
 import { PageHeader } from "@/components/page-header";
 import { InviteMembers } from "./invite-members";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MembersManager } from "./members-manager";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -13,18 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
-
 export default async function SettingsPage({
   params,
 }: {
   params: { org: string };
 }) {
-  const { supabase, org, role } = await requireOrgMembership(params.org);
+  const { supabase, user, org, role } = await requireOrgMembership(params.org);
 
   const { data: members } = await supabase
     .from("org_members")
@@ -137,32 +131,20 @@ export default async function SettingsPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="grid gap-3">
-              {(members ?? []).map((m) => {
+            <MembersManager
+              slug={org.slug}
+              canManage={canInvite}
+              currentUserId={user.id}
+              members={(members ?? []).map((m) => {
                 const p = names.get(m.user_id);
-                const display = p?.full_name ?? p?.email ?? "Member";
-                return (
-                  <li key={m.user_id} className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarFallback className="text-xs">
-                        {initials(display)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{display}</p>
-                      {p?.email && (
-                        <p className="truncate text-xs text-muted-foreground">
-                          {p.email}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="capitalize">
-                      {m.role}
-                    </Badge>
-                  </li>
-                );
+                return {
+                  userId: m.user_id,
+                  role: m.role,
+                  name: p?.full_name ?? p?.email ?? "Member",
+                  email: p?.email ?? null,
+                };
               })}
-            </ul>
+            />
           </CardContent>
         </Card>
       </div>

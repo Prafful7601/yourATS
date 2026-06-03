@@ -24,21 +24,31 @@ export default async function CandidatesPage({
   const { data: candidates } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, email, phone, skills, created_at, applications(match_score)"
+      "id, full_name, email, phone, skills, created_at, applications(match_score, applied_at, jobs(title))"
     )
     .eq("org_id", org.id)
     .order("created_at", { ascending: false });
 
   const rows: CandidateRow[] = (candidates ?? []).map((c) => {
-    const apps = (c.applications as { match_score: number | null }[]) ?? [];
+    const apps =
+      (c.applications as {
+        match_score: number | null;
+        applied_at: string;
+        jobs: { title: string } | null;
+      }[]) ?? [];
     const scores = apps
       .map((a) => a.match_score)
       .filter((s): s is number => s != null);
+    // Designation = the role from their most recent application.
+    const latest = [...apps].sort(
+      (a, b) => +new Date(b.applied_at) - +new Date(a.applied_at)
+    )[0];
     return {
       id: c.id,
       full_name: c.full_name,
       email: c.email,
       phone: c.phone,
+      designation: latest?.jobs?.title ?? null,
       skills: c.skills,
       created_at: c.created_at,
       appCount: apps.length,

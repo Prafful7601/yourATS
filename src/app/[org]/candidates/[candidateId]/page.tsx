@@ -57,6 +57,10 @@ export default async function CandidateProfilePage({
     .eq("candidate_id", candidate.id)
     .order("applied_at", { ascending: false });
 
+  // Designation = role from the most recent application.
+  const designation =
+    (applications?.[0]?.jobs as { title: string } | null)?.title ?? null;
+
   return (
     <div className="mx-auto max-w-3xl p-8">
       <div className="mb-4">
@@ -75,6 +79,9 @@ export default async function CandidateProfilePage({
           <h1 className="text-2xl font-semibold tracking-tight">
             {candidate.full_name}
           </h1>
+          {designation && (
+            <p className="text-sm font-medium text-foreground">{designation}</p>
+          )}
           <p className="text-sm text-muted-foreground">
             {[candidate.email, candidate.phone].filter(Boolean).join(" · ") ||
               "No contact info"}

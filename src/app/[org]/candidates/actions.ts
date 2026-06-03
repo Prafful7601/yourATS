@@ -137,6 +137,40 @@ export async function deleteCandidate(slug: string, candidateId: string) {
   redirect(`/${slug}/candidates`);
 }
 
+/** Bulk-deletes candidates (cascades their apps/notes/scorecards + résumé files). */
+export async function deleteCandidates(
+  slug: string,
+  ids: string[]
+): Promise<{ error: string | null; deleted?: number }> {
+  if (!ids.length) return { error: null, deleted: 0 };
+  const { supabase } = await requireOrgMembership(slug);
+
+  const { data: cands } = await supabase
+    .from("candidates")
+    .select("resume_url")
+    .in("id", ids);
+
+  const { error, count } = await supabase
+    .from("candidates")
+    .delete({ count: "exact" })
+    .in("id", ids);
+  if (error) return { error: error.message };
+
+  const paths = (cands ?? [])
+    .map((c) => c.resume_url)
+    .filter((p): p is string => Boolean(p));
+  if (paths.length) {
+    try {
+      await createAdminClient().storage.from("resumes").remove(paths);
+    } catch {
+      // ignore — rows already deleted
+    }
+  }
+
+  revalidatePath(`/${slug}/candidates`);
+  return { error: null, deleted: count ?? ids.length };
+}
+
 export type ImportRow = {
   full_name: string;
   email?: string | null;
