@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 
 export type ActionResult = { error: string | null };
@@ -115,6 +116,48 @@ export async function saveResumeParse(
   const { error } = await supabase
     .from("candidates")
     .update(patch)
+    .eq("id", candidateId);
+  if (error) return { error: error.message };
+
+  revalidateApp(slug, jobId, appId);
+  return { error: null };
+}
+
+export async function uploadResume(
+  slug: string,
+  jobId: string,
+  appId: string,
+  candidateId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const { supabase, org } = await requireOrgMembership(slug);
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "No file provided." };
+  }
+  if (file.type !== "application/pdf") {
+    return { error: "Only PDF résumés are supported." };
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return { error: "File is too large (max 10MB)." };
+  }
+
+  // Upload via the service-role client (bucket is private; membership already
+  // verified above). Path is namespaced by org for isolation.
+  const admin = createAdminClient();
+  const path = `${org.id}/${candidateId}/${Date.now()}-${file.name.replace(
+    /[^a-zA-Z0-9._-]/g,
+    "_"
+  )}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error: upErr } = await admin.storage
+    .from("resumes")
+    .upload(path, buffer, { contentType: "application/pdf", upsert: true });
+  if (upErr) return { error: upErr.message };
+
+  const { error } = await supabase
+    .from("candidates")
+    .update({ resume_url: path })
     .eq("id", candidateId);
   if (error) return { error: error.message };
 

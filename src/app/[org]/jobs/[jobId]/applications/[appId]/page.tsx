@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,15 @@ export default async function ApplicationPage({
     resume_url: string | null;
     parsed_resume: { raw?: string } | null;
   };
+
+  // Signed URL for the stored résumé (private bucket).
+  let resumeUrl: string | null = null;
+  if (candidate.resume_url) {
+    const { data: signed } = await createAdminClient()
+      .storage.from("resumes")
+      .createSignedUrl(candidate.resume_url, 60 * 60);
+    resumeUrl = signed?.signedUrl ?? null;
+  }
   const job = app.jobs as unknown as {
     title: string;
     description: string | null;
@@ -164,6 +174,7 @@ export default async function ApplicationPage({
               jobText={job?.description ?? ""}
               hasJobText={Boolean(job?.description?.trim())}
               initialResume={candidate.parsed_resume?.raw ?? ""}
+              resumeUrl={resumeUrl}
             />
           </CardContent>
         </Card>

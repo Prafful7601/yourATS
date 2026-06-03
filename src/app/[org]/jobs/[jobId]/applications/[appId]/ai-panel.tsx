@@ -1,15 +1,32 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { FileText, Sparkles, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { saveMatchScore, saveResumeParse } from "./actions";
+import { saveMatchScore, saveResumeParse, uploadResume } from "./actions";
+
+/** Best-effort client-side PDF text extraction via pdf.js. */
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  let text = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    text +=
+      content.items
+        .map((it) => ("str" in it ? (it as { str: string }).str : ""))
+        .join(" ") + "\n";
+  }
+  return text.replace(/\s+\n/g, "\n").trim();
+}
 
 type ParseResponse = {
   email: string | null;
@@ -36,6 +53,7 @@ export function AIPanel({
   jobText,
   initialResume,
   hasJobText,
+  resumeUrl,
 }: {
   slug: string;
   jobId: string;
@@ -44,12 +62,43 @@ export function AIPanel({
   jobText: string;
   initialResume: string;
   hasJobText: boolean;
+  resumeUrl: string | null;
 }) {
   const router = useRouter();
   const [resume, setResume] = useState(initialResume);
   const [parse, setParse] = useState<ParseResponse | null>(null);
   const [match, setMatch] = useState<MatchResponse | null>(null);
   const [pending, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onPdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Please choose a PDF file.");
+      return;
+    }
+    setUploading(true);
+    // Extract text first (best-effort), so the recruiter can Parse it.
+    try {
+      const text = await extractPdfText(file);
+      if (text) setResume(text);
+    } catch {
+      toast.message("Uploaded — couldn't auto-read the PDF, paste text to parse.");
+    }
+    // Upload the file to storage and save it on the candidate.
+    const fd = new FormData();
+    fd.set("file", file);
+    const res = await uploadResume(slug, jobId, appId, candidateId, fd);
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success("Résumé uploaded.");
+      router.refresh();
+    }
+  }
 
   async function callAi<T>(action: string, payload: object): Promise<T> {
     const res = await fetch(`/api/ai/${action}`, {
@@ -119,10 +168,40 @@ export function AIPanel({
 
   return (
     <div className="grid gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+        >
+          <Upload className="size-4" />
+          {uploading ? "Uploading…" : "Upload PDF résumé"}
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={onPdf}
+        />
+        {resumeUrl && (
+          <a
+            href={resumeUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline"
+          >
+            <FileText className="size-4" />
+            View current résumé
+          </a>
+        )}
+      </div>
+
       <Textarea
         value={resume}
         onChange={(e) => setResume(e.target.value)}
-        placeholder="Paste the candidate's résumé text here…"
+        placeholder="Paste résumé text, or upload a PDF above to auto-fill…"
         rows={6}
       />
       <div className="flex flex-wrap gap-2">
