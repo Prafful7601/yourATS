@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -18,8 +18,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +43,9 @@ export default function SignUpPage() {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback${
+          redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : ""
+        }`,
       },
     });
     setLoading(false);
@@ -57,7 +61,7 @@ export default function SignUpPage() {
       return;
     }
 
-    router.push("/onboarding");
+    router.push(redirectTo || "/onboarding");
     router.refresh();
   }
 
@@ -118,5 +122,13 @@ export default function SignUpPage() {
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
   );
 }

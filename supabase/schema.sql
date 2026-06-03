@@ -242,6 +242,26 @@ create trigger scorecards_updated_at
   for each row execute function public.set_updated_at();
 
 -- ----------------------------------------------------------------------------
+-- 10. org_invitations  (pending team invites; the id doubles as the link token)
+-- ----------------------------------------------------------------------------
+create table if not exists public.org_invitations (
+  id          uuid primary key default gen_random_uuid(),
+  org_id      uuid not null references public.organizations (id) on delete cascade,
+  email       text not null,
+  role        org_role not null default 'recruiter',
+  invited_by  uuid references auth.users (id) on delete set null,
+  accepted_at timestamptz,
+  created_at  timestamptz not null default now(),
+  expires_at  timestamptz not null default (now() + interval '7 days')
+);
+
+create index if not exists org_invitations_org_idx on public.org_invitations (org_id);
+-- One pending invite per email per org.
+create unique index if not exists org_invitations_pending_idx
+  on public.org_invitations (org_id, lower(email))
+  where accepted_at is null;
+
+-- ----------------------------------------------------------------------------
 -- Role grants
 -- Supabase exposes the database to the anon / authenticated / service_role
 -- roles. Tables created here need table-level privileges granted to those

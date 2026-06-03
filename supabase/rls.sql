@@ -17,6 +17,7 @@ alter table public.candidates        enable row level security;
 alter table public.applications      enable row level security;
 alter table public.application_notes enable row level security;
 alter table public.scorecards        enable row level security;
+alter table public.org_invitations   enable row level security;
 
 -- ----------------------------------------------------------------------------
 -- profiles: a user manages only their own profile, and can read the profiles
@@ -147,3 +148,13 @@ create policy "scorecards_delete_author_or_admin" on public.scorecards
     author_id = auth.uid()
     or public.has_org_role(org_id, array['owner','admin']::org_role[])
   );
+
+-- ----------------------------------------------------------------------------
+-- org_invitations: only owners/admins manage invites for their org.
+-- Accepting an invite runs server-side with the service-role client (which
+-- bypasses RLS), so invitees don't need a read policy here.
+-- ----------------------------------------------------------------------------
+create policy "invites_admin_all" on public.org_invitations
+  for all
+  using (public.has_org_role(org_id, array['owner','admin']::org_role[]))
+  with check (public.has_org_role(org_id, array['owner','admin']::org_role[]));

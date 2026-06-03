@@ -4,7 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware"
 
 // Top-level paths that are NOT an organization workspace.
 // /api routes do their own auth and must never be redirected.
-const PUBLIC_PREFIXES = ["/auth", "/careers", "/api"]
+const PUBLIC_PREFIXES = ["/auth", "/careers", "/api", "/invite"]
 const AUTH_PAGES = ["/sign-in", "/sign-up"]
 
 export async function middleware(request: NextRequest) {

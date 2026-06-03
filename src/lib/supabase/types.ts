@@ -257,6 +257,30 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["scorecards"]["Insert"]>
         Relationships: []
       }
+      org_invitations: {
+        Row: {
+          id: string
+          org_id: string
+          email: string
+          role: OrgRole
+          invited_by: string | null
+          accepted_at: string | null
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          email: string
+          role?: OrgRole
+          invited_by?: string | null
+          accepted_at?: string | null
+          created_at?: string
+          expires_at?: string
+        }
+        Update: Partial<Database["public"]["Tables"]["org_invitations"]["Insert"]>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

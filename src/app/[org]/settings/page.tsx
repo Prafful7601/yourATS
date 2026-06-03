@@ -2,6 +2,7 @@ import { Settings as SettingsIcon } from "lucide-react";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
 import { PageHeader } from "@/components/page-header";
+import { InviteMembers } from "./invite-members";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,6 +42,31 @@ export default async function SettingsPage({
     profiles?.forEach((p) =>
       names.set(p.id, { full_name: p.full_name, email: p.email })
     );
+  }
+
+  // Pending invites (owners/admins only). Guarded so Settings still loads if
+  // the org_invitations table hasn't been migrated yet.
+  const canInvite = role === "owner" || role === "admin";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
+  let pendingInvites: {
+    id: string;
+    email: string;
+    role: string;
+    link: string;
+  }[] = [];
+  if (canInvite) {
+    const { data: invites } = await supabase
+      .from("org_invitations")
+      .select("id, email, role")
+      .eq("org_id", org.id)
+      .is("accepted_at", null)
+      .order("created_at", { ascending: false });
+    pendingInvites = (invites ?? []).map((i) => ({
+      id: i.id,
+      email: i.email,
+      role: i.role,
+      link: `${appUrl}/invite/${i.id}`,
+    }));
   }
 
   const careersUrl = `/careers/${org.slug}`;
@@ -87,6 +113,21 @@ export default async function SettingsPage({
             </div>
           </CardContent>
         </Card>
+
+        {canInvite && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Invite members</CardTitle>
+              <CardDescription>
+                Invite teammates by email. They&apos;ll get a link to join this
+                workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InviteMembers slug={org.slug} pending={pendingInvites} />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
