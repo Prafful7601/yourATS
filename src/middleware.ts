@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 // Top-level paths that are NOT an organization workspace.
-const PUBLIC_PREFIXES = ["/auth", "/careers"]
+// /api routes do their own auth and must never be redirected.
+const PUBLIC_PREFIXES = ["/auth", "/careers", "/api"]
 const AUTH_PAGES = ["/sign-in", "/sign-up"]
 
 export async function middleware(request: NextRequest) {
