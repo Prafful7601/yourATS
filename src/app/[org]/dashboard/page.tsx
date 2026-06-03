@@ -55,10 +55,30 @@ export default async function DashboardPage({
     .limit(5);
 
   const stats = [
-    { label: "Open jobs", value: openJobs, icon: Briefcase },
-    { label: "Total jobs", value: totalJobs, icon: Briefcase },
-    { label: "Candidates", value: candidates, icon: Users },
-    { label: "Active applications", value: activeApps, icon: KanbanSquare },
+    {
+      label: "Open jobs",
+      value: openJobs,
+      icon: Briefcase,
+      tile: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      label: "Total jobs",
+      value: totalJobs,
+      icon: Briefcase,
+      tile: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    },
+    {
+      label: "Candidates",
+      value: candidates,
+      icon: Users,
+      tile: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    },
+    {
+      label: "Active applications",
+      value: activeApps,
+      icon: KanbanSquare,
+      tile: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    },
   ];
 
   return (
@@ -79,10 +99,15 @@ export default async function DashboardPage({
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
+        {stats.map(({ label, value, icon: Icon, tile }) => (
+          <Card
+            key={label}
+            className="transition-shadow hover:shadow-md"
+          >
             <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <div
+                className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${tile}`}
+              >
                 <Icon className="size-5" />
               </div>
               <div>
