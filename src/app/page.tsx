@@ -2,6 +2,7 @@ import Link from "next/link";
 import { KanbanSquare, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURES = [
   {
@@ -28,6 +29,7 @@ export default function Home() {
       <header className="flex items-center justify-between px-6 py-5">
         <span className="font-semibold tracking-tight">YouRats</span>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"

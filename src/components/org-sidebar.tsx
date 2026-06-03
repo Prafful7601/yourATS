@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type Props = {
   slug: string;
@@ -88,6 +89,7 @@ export function OrgSidebar({ slug, orgName, fullName, email }: Props) {
             </p>
             <p className="truncate text-xs text-muted-foreground">{email}</p>
           </div>
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon-sm"
