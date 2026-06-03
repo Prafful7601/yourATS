@@ -240,3 +240,11 @@ create index if not exists scorecards_app_idx on public.scorecards (application_
 create trigger scorecards_updated_at
   before update on public.scorecards
   for each row execute function public.set_updated_at();
+
+-- ----------------------------------------------------------------------------
+-- Role grants
+-- Supabase exposes the database to the anon / authenticated / service_role
+-- roles. Tables created here need table-level privileges granted to those
+-- roles; actual row visibility is still governed by the RLS policies in
+-- rls.sql. service_role bypasses RLS but also requires these grants.
+-- ----------------------------------------------------------------------------
