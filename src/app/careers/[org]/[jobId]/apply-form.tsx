@@ -37,6 +37,15 @@ export function ApplyForm({ slug, jobId }: { slug: string; jobId: string }) {
     <form action={formAction} className="grid gap-4">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="jobId" value={jobId} />
+      {/* Honeypot: hidden from humans, bots tend to fill it. */}
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+      />
       <div className="grid gap-2">
         <Label htmlFor="fullName">Full name</Label>
         <Input id="fullName" name="fullName" placeholder="Your name" required />

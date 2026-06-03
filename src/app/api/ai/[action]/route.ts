@@ -27,8 +27,13 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const text = typeof body.text === "string" ? body.text : "";
-  const jobText = typeof body.jobText === "string" ? body.jobText : "";
+  // Cap input size to keep AI calls bounded (abuse / cost / timeout guard).
+  const MAX = 50_000;
+  const text = (typeof body.text === "string" ? body.text : "").slice(0, MAX);
+  const jobText = (typeof body.jobText === "string" ? body.jobText : "").slice(
+    0,
+    MAX
+  );
 
   try {
     switch (params.action) {

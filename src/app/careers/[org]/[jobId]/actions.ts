@@ -15,13 +15,21 @@ export async function applyToJob(
   _prev: ApplyState,
   formData: FormData
 ): Promise<ApplyState> {
+  // Honeypot: bots fill hidden fields. Pretend success, insert nothing.
+  if (String(formData.get("company") ?? "").trim()) {
+    return { error: null, ok: true };
+  }
+
   const slug = String(formData.get("slug") ?? "");
   const jobId = String(formData.get("jobId") ?? "");
-  const fullName = String(formData.get("fullName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim() || null;
-  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const fullName = String(formData.get("fullName") ?? "").trim().slice(0, 120);
+  const email = (String(formData.get("email") ?? "").trim().toLowerCase() || null)?.slice(0, 200) ?? null;
+  const phone = (String(formData.get("phone") ?? "").trim() || null)?.slice(0, 40) ?? null;
 
   if (!fullName) return { error: "Please enter your name." };
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Please enter a valid email address." };
+  }
 
   const admin = createAdminClient();
 

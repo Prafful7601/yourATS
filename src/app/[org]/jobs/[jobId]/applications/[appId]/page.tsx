@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 
 import { AIPanel } from "./ai-panel";
+import { StatusControl } from "./status-control";
 import { NotesSection, type Note } from "./notes-section";
 import { ScorecardsSection, type Scorecard } from "./scorecards-section";
 
@@ -157,6 +158,14 @@ export default async function ApplicationPage({
               ))}
             </div>
           )}
+          <div className="mt-3">
+            <StatusControl
+              slug={org.slug}
+              jobId={params.jobId}
+              appId={app.id}
+              status={app.status}
+            />
+          </div>
         </div>
       </div>
 

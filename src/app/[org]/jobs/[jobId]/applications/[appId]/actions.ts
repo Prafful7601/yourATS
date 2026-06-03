@@ -6,7 +6,34 @@ import { requireOrgMembership } from "@/lib/supabase/org";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 
+import type { ApplicationStatus } from "@/lib/supabase/types";
+
 export type ActionResult = { error: string | null };
+
+const APP_STATUSES: ApplicationStatus[] = [
+  "active",
+  "hired",
+  "rejected",
+  "withdrawn",
+];
+
+export async function updateApplicationStatus(
+  slug: string,
+  jobId: string,
+  appId: string,
+  status: ApplicationStatus
+): Promise<ActionResult> {
+  if (!APP_STATUSES.includes(status)) return { error: "Invalid status." };
+  const { supabase } = await requireOrgMembership(slug);
+  const { error } = await supabase
+    .from("applications")
+    .update({ status })
+    .eq("id", appId);
+  if (error) return { error: error.message };
+  revalidateApp(slug, jobId, appId);
+  revalidatePath(`/${slug}/jobs/${jobId}/board`);
+  return { error: null };
+}
 
 function revalidateApp(slug: string, jobId: string, appId: string) {
   revalidatePath(`/${slug}/jobs/${jobId}/applications/${appId}`);
@@ -18,7 +45,7 @@ export async function addNote(
   appId: string,
   body: string
 ): Promise<ActionResult> {
-  const trimmed = body.trim();
+  const trimmed = body.trim().slice(0, 5000);
   if (!trimmed) return { error: "Note cannot be empty." };
 
   const { supabase, org, user } = await requireOrgMembership(slug);
@@ -68,7 +95,7 @@ export async function addScorecard(
     org_id: org.id,
     author_id: user.id,
     rating,
-    feedback: feedback.trim() || null,
+    feedback: feedback.trim().slice(0, 5000) || null,
   });
   if (error) return { error: error.message };
 
