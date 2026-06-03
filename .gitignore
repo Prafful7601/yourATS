@@ -24,6 +24,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+dev.log
+
+# scratch / verification scripts
+_*.mjs
 
 # local env files
 .env*.local
