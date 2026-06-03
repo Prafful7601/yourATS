@@ -1,9 +1,4 @@
-import Link from "next/link";
-
 import { requireOrgMembership } from "@/lib/supabase/org";
-import { formatDistanceToNow } from "date-fns";
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -12,11 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
+import { CandidatesList, type CandidateRow } from "./candidates-list";
 
 export default async function CandidatesPage({
   params,
@@ -27,9 +18,28 @@ export default async function CandidatesPage({
 
   const { data: candidates } = await supabase
     .from("candidates")
-    .select("id, full_name, email, phone, created_at, applications(id)")
+    .select(
+      "id, full_name, email, phone, skills, created_at, applications(match_score)"
+    )
     .eq("org_id", org.id)
     .order("created_at", { ascending: false });
+
+  const rows: CandidateRow[] = (candidates ?? []).map((c) => {
+    const apps = (c.applications as { match_score: number | null }[]) ?? [];
+    const scores = apps
+      .map((a) => a.match_score)
+      .filter((s): s is number => s != null);
+    return {
+      id: c.id,
+      full_name: c.full_name,
+      email: c.email,
+      phone: c.phone,
+      skills: c.skills,
+      created_at: c.created_at,
+      appCount: apps.length,
+      bestScore: scores.length > 0 ? Math.max(...scores) : null,
+    };
+  });
 
   return (
     <div className="mx-auto max-w-4xl p-8">
@@ -40,7 +50,7 @@ export default async function CandidatesPage({
         </p>
       </div>
 
-      {!candidates || candidates.length === 0 ? (
+      {rows.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>No candidates yet</CardTitle>
@@ -51,41 +61,7 @@ export default async function CandidatesPage({
           <CardContent />
         </Card>
       ) : (
-        <div className="grid gap-3">
-          {candidates.map((c) => {
-            const appCount = Array.isArray(c.applications)
-              ? c.applications.length
-              : 0;
-            return (
-              <Link
-                key={c.id}
-                href={`/${org.slug}/candidates/${c.id}`}
-                className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-              >
-                <Avatar className="size-9">
-                  <AvatarFallback>{initials(c.full_name)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{c.full_name}</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {c.email ?? c.phone ?? "No contact info"}
-                  </p>
-                </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  <p>
-                    {appCount} application{appCount === 1 ? "" : "s"}
-                  </p>
-                  <p>
-                    added{" "}
-                    {formatDistanceToNow(new Date(c.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <CandidatesList slug={org.slug} candidates={rows} />
       )}
     </div>
   );
