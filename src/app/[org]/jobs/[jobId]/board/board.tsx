@@ -23,11 +23,13 @@ import {
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { moveApplication } from "./actions";
 
@@ -49,10 +51,12 @@ function CandidateCard({
   card,
   href,
   dragging,
+  rank,
 }: {
   card: Card;
   href?: string;
   dragging?: boolean;
+  rank?: number;
 }) {
   return (
     <div
@@ -62,6 +66,11 @@ function CandidateCard({
       )}
     >
       <div className="flex items-center gap-2">
+        {rank != null && (
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+            {rank}
+          </span>
+        )}
         <Avatar className="size-7">
           <AvatarFallback className="text-xs">
             {initials(card.name)}
@@ -95,18 +104,28 @@ function CandidateCard({
   );
 }
 
-function SortableCard({ card, href }: { card: Card; href: string }) {
+function SortableCard({
+  card,
+  href,
+  rank,
+  disabled,
+}: {
+  card: Card;
+  href: string;
+  rank?: number;
+  disabled?: boolean;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: card.id });
+    useSortable({ id: card.id, disabled });
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className="touch-none"
+      className={disabled ? "" : "touch-none"}
       {...attributes}
       {...listeners}
     >
-      <CandidateCard card={card} href={href} dragging={isDragging} />
+      <CandidateCard card={card} href={href} dragging={isDragging} rank={rank} />
     </div>
   );
 }
@@ -116,11 +135,13 @@ function ColumnView({
   cardIds,
   cards,
   hrefBase,
+  ranked,
 }: {
   column: { id: string; name: string };
   cardIds: string[];
   cards: Record<string, Card>;
   hrefBase: string;
+  ranked: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
@@ -137,11 +158,13 @@ function ColumnView({
             isOver && "bg-muted"
           )}
         >
-          {cardIds.map((id) => (
+          {cardIds.map((id, i) => (
             <SortableCard
               key={id}
               card={cards[id]}
               href={`${hrefBase}/${id}`}
+              disabled={ranked}
+              rank={ranked ? i + 1 : undefined}
             />
           ))}
           {cardIds.length === 0 && (
@@ -181,6 +204,16 @@ export function Board({
 
   const [items, setItems] = useState<Record<string, string[]>>(buildItems);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [ranked, setRanked] = useState(false);
+
+  // When ranking, order each column by ATS match score (desc, nulls last).
+  function displayIds(colId: string): string[] {
+    const ids = items[colId] ?? [];
+    if (!ranked) return ids;
+    return [...ids].sort(
+      (a, b) => (cards[b]?.matchScore ?? -1) - (cards[a]?.matchScore ?? -1)
+    );
+  }
 
   // Resync when the server sends fresh data (after a move revalidates).
   useEffect(() => {
@@ -259,29 +292,48 @@ export function Board({
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragEnd={onDragEnd}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {columnOrder.map((col) => (
-          <ColumnView
-            key={col.id}
-            column={col}
-            cardIds={items[col.id] ?? []}
-            cards={cards}
-            hrefBase={`/${slug}/jobs/${jobId}/applications`}
-          />
-        ))}
+    <div className="flex h-full flex-col">
+      <div className="mb-3 flex items-center gap-2">
+        <Button
+          variant={ranked ? "default" : "outline"}
+          size="sm"
+          onClick={() => setRanked((r) => !r)}
+        >
+          <ArrowUpDown className="size-4" />
+          {ranked ? "Ranked by ATS score" : "Rank by ATS score"}
+        </Button>
+        {ranked && (
+          <span className="text-xs text-muted-foreground">
+            Cards ordered by match score · drag disabled
+          </span>
+        )}
       </div>
-      <DragOverlay>
-        {activeId && cards[activeId] ? (
-          <CandidateCard card={cards[activeId]} />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+      >
+        <div className="flex flex-1 gap-4 overflow-x-auto pb-4">
+          {columnOrder.map((col) => (
+            <ColumnView
+              key={col.id}
+              column={col}
+              cardIds={displayIds(col.id)}
+              cards={cards}
+              hrefBase={`/${slug}/jobs/${jobId}/applications`}
+              ranked={ranked}
+            />
+          ))}
+        </div>
+        <DragOverlay>
+          {activeId && cards[activeId] ? (
+            <CandidateCard card={cards[activeId]} />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }

@@ -5,6 +5,8 @@ import { requireOrgMembership } from "@/lib/supabase/org";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+import { DeleteCandidateButton } from "./delete-candidate-button";
 import {
   Card,
   CardContent,
@@ -55,7 +57,7 @@ export default async function CandidateProfilePage({
         <Avatar className="size-14">
           <AvatarFallback>{initials(candidate.full_name)}</AvatarFallback>
         </Avatar>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             {candidate.full_name}
           </h1>
@@ -74,6 +76,7 @@ export default async function CandidateProfilePage({
             </div>
           )}
         </div>
+        <DeleteCandidateButton slug={org.slug} candidateId={candidate.id} />
       </div>
 
       <Card>

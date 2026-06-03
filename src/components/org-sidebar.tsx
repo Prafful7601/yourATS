@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Briefcase,
   ChevronRight,
+  ExternalLink,
   FileText,
   KanbanSquare,
   LayoutDashboard,
@@ -120,7 +121,7 @@ export function OrgSidebar({ slug, orgName, fullName, email, jobs }: Props) {
   const onJobs = pathname.startsWith(`${base}/jobs`);
   const onCandidates = pathname.startsWith(`${base}/candidates`);
 
-  const [jobsOpen, setJobsOpen] = useState(onJobs);
+  const [jobsOpen, setJobsOpen] = useState(true);
   const [openJobs, setOpenJobs] = useState<Set<string>>(new Set());
 
   const isActive = (href: string) => pathname === href;
@@ -253,6 +254,18 @@ export function OrgSidebar({ slug, orgName, fullName, email, jobs }: Props) {
           label="Settings"
           active={isActive(`${base}/settings`)}
         />
+
+        <div className="my-1 border-t" />
+
+        <a
+          href={`/careers/${slug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2.5 rounded-md py-2 pl-3 pr-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-foreground"
+        >
+          <ExternalLink className="size-4 shrink-0" />
+          <span className="flex-1">Careers page</span>
+        </a>
       </nav>
 
       <div className="border-t p-3">

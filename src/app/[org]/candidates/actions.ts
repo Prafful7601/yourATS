@@ -1,8 +1,39 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+/** Deletes a candidate (cascades applications, notes, scorecards) and their résumé file. */
+export async function deleteCandidate(slug: string, candidateId: string) {
+  const { supabase } = await requireOrgMembership(slug);
+
+  const { data: cand } = await supabase
+    .from("candidates")
+    .select("resume_url")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("candidates")
+    .delete()
+    .eq("id", candidateId);
+  if (error) return { error: error.message };
+
+  // Best-effort: remove the stored résumé from the private bucket.
+  if (cand?.resume_url) {
+    try {
+      await createAdminClient().storage.from("resumes").remove([cand.resume_url]);
+    } catch {
+      // ignore — the DB row is already gone
+    }
+  }
+
+  revalidatePath(`/${slug}/candidates`);
+  redirect(`/${slug}/candidates`);
+}
 
 export type ImportRow = {
   full_name: string;
