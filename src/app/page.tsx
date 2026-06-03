@@ -20,10 +20,10 @@ export default function Home() {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button render={<Link href="/signup">Get started</Link>} />
+        <Button render={<Link href="/sign-up">Get started</Link>} />
         <Button
           variant="outline"
-          render={<Link href="/login">Sign in</Link>}
+          render={<Link href="/sign-in">Sign in</Link>}
         />
       </div>
 

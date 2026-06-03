@@ -77,7 +77,15 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database["public"]["Tables"]["org_members"]["Insert"]>
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobs: {
         Row: {
