@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "YouRats — Applicant Tracking System",
+  title: "yourATS - Applicant Tracking System",
   description: "Multi-tenant ATS for modern recruiting teams.",
 };
 
