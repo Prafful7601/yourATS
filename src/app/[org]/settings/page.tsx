@@ -47,19 +47,38 @@ export default async function SettingsPage({
     email: string;
     role: string;
     link: string;
+    invitedBy: string | null;
   }[] = [];
   if (canInvite) {
     const { data: invites } = await supabase
       .from("org_invitations")
-      .select("id, email, role")
+      .select("id, email, role, invited_by")
       .eq("org_id", org.id)
       .is("accepted_at", null)
       .order("created_at", { ascending: false });
+    // Resolve inviter names (already loaded for members; fetch any extras).
+    const inviterIds = (invites ?? [])
+      .map((i) => i.invited_by)
+      .filter((id): id is string => !!id && !names.has(id));
+    if (inviterIds.length > 0) {
+      const { data: extra } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", inviterIds);
+      extra?.forEach((p) =>
+        names.set(p.id, { full_name: p.full_name, email: p.email })
+      );
+    }
     pendingInvites = (invites ?? []).map((i) => ({
       id: i.id,
       email: i.email,
       role: i.role,
       link: `${appUrl}/invite/${i.id}`,
+      invitedBy: i.invited_by
+        ? names.get(i.invited_by)?.full_name ??
+          names.get(i.invited_by)?.email ??
+          null
+        : null,
     }));
   }
 

@@ -16,6 +16,7 @@ export type PendingInvite = {
   email: string;
   role: string;
   link: string;
+  invitedBy: string | null;
 };
 
 function SubmitButton() {
@@ -115,7 +116,14 @@ export function InviteMembers({
                 key={inv.id}
                 className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm"
               >
-                <span className="min-w-0 flex-1 truncate">{inv.email}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {inv.email}
+                  {inv.invitedBy && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      invited by {inv.invitedBy}
+                    </span>
+                  )}
+                </span>
                 <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs capitalize text-muted-foreground">
                   {inv.role}
                 </span>

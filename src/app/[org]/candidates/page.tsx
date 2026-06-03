@@ -24,7 +24,7 @@ export default async function CandidatesPage({
   const { data: candidates } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, email, phone, skills, created_at, applications(match_score, applied_at, jobs(title))"
+      "id, full_name, title, email, phone, skills, created_at, applications(match_score, applied_at, jobs(title))"
     )
     .eq("org_id", org.id)
     .order("created_at", { ascending: false });
@@ -48,7 +48,7 @@ export default async function CandidatesPage({
       full_name: c.full_name,
       email: c.email,
       phone: c.phone,
-      designation: latest?.jobs?.title ?? null,
+      designation: c.title ?? latest?.jobs?.title ?? null,
       skills: c.skills,
       created_at: c.created_at,
       appCount: apps.length,

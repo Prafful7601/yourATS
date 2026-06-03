@@ -22,7 +22,7 @@ export async function createInvite(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "recruiter") as OrgRole;
 
-  const { supabase, org, role: myRole } = await requireOrgMembership(slug);
+  const { supabase, org, user, role: myRole } = await requireOrgMembership(slug);
   if (myRole !== "owner" && myRole !== "admin") {
     return { error: "Only owners and admins can invite members." };
   }
@@ -49,7 +49,7 @@ export async function createInvite(
 
   const { data: invite, error } = await supabase
     .from("org_invitations")
-    .insert({ org_id: org.id, email, role: safeRole })
+    .insert({ org_id: org.id, email, role: safeRole, invited_by: user.id })
     .select("id")
     .single();
 

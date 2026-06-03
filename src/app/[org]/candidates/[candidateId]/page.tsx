@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { DeleteCandidateButton } from "./delete-candidate-button";
+import { EditableDesignation } from "./editable-designation";
 import { ResumePanel } from "./resume-panel";
 import {
   Card,
@@ -33,7 +34,7 @@ export default async function CandidateProfilePage({
   const { data: candidate } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, email, phone, source, skills, resume_url, parsed_resume, created_at"
+      "id, full_name, title, email, phone, source, skills, resume_url, parsed_resume, created_at"
     )
     .eq("id", params.candidateId)
     .eq("org_id", org.id)
@@ -57,8 +58,8 @@ export default async function CandidateProfilePage({
     .eq("candidate_id", candidate.id)
     .order("applied_at", { ascending: false });
 
-  // Designation = role from the most recent application.
-  const designation =
+  // Fallback designation = role from the most recent application.
+  const latestRole =
     (applications?.[0]?.jobs as { title: string } | null)?.title ?? null;
 
   return (
@@ -79,9 +80,12 @@ export default async function CandidateProfilePage({
           <h1 className="text-2xl font-semibold tracking-tight">
             {candidate.full_name}
           </h1>
-          {designation && (
-            <p className="text-sm font-medium text-foreground">{designation}</p>
-          )}
+          <EditableDesignation
+            slug={org.slug}
+            candidateId={candidate.id}
+            title={candidate.title}
+            fallback={latestRole}
+          />
           <p className="text-sm text-muted-foreground">
             {[candidate.email, candidate.phone].filter(Boolean).join(" · ") ||
               "No contact info"}

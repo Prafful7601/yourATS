@@ -16,6 +16,7 @@ export async function createCandidate(
 ): Promise<NewCandidateState> {
   const slug = String(formData.get("slug") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim().slice(0, 120) || null;
   const email = String(formData.get("email") ?? "").trim().toLowerCase() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
 
@@ -39,7 +40,7 @@ export async function createCandidate(
 
   const { data: candidate, error } = await supabase
     .from("candidates")
-    .insert({ org_id: org.id, full_name: fullName, email, phone })
+    .insert({ org_id: org.id, full_name: fullName, title, email, phone })
     .select("id")
     .single();
   if (error || !candidate) {
@@ -169,6 +170,23 @@ export async function deleteCandidates(
 
   revalidatePath(`/${slug}/candidates`);
   return { error: null, deleted: count ?? ids.length };
+}
+
+/** Updates a candidate's designation/title. */
+export async function updateCandidateTitle(
+  slug: string,
+  candidateId: string,
+  title: string
+): Promise<{ error: string | null }> {
+  const { supabase } = await requireOrgMembership(slug);
+  const { error } = await supabase
+    .from("candidates")
+    .update({ title: title.trim().slice(0, 120) || null })
+    .eq("id", candidateId);
+  if (error) return { error: error.message };
+  revalidatePath(`/${slug}/candidates/${candidateId}`);
+  revalidatePath(`/${slug}/candidates`);
+  return { error: null };
 }
 
 export type ImportRow = {

@@ -140,6 +140,7 @@ export interface Database {
           id: string
           org_id: string
           full_name: string
+          title: string | null
           email: string | null
           phone: string | null
           resume_url: string | null
@@ -151,6 +152,7 @@ export interface Database {
           id?: string
           org_id: string
           full_name: string
+          title?: string | null
           email?: string | null
           phone?: string | null
           resume_url?: string | null

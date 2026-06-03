@@ -163,6 +163,7 @@ create table if not exists public.candidates (
   id             uuid primary key default gen_random_uuid(),
   org_id         uuid not null references public.organizations (id) on delete cascade,
   full_name      text not null,
+  title          text,
   email          text,
   phone          text,
   resume_url     text,

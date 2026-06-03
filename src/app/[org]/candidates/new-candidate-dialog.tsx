@@ -58,6 +58,10 @@ export function NewCandidateDialog({ slug }: { slug: string }) {
             <Input id="fullName" name="fullName" placeholder="Ada Lovelace" required />
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="title">Designation</Label>
+            <Input id="title" name="title" placeholder="Senior Frontend Engineer" />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" placeholder="ada@example.com" />
           </div>
