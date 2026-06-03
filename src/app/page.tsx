@@ -27,7 +27,7 @@ export default function Home() {
     <main className="relative flex min-h-screen flex-col">
       {/* Top bar */}
       <header className="flex items-center justify-between px-6 py-5">
-        <span className="font-semibold tracking-tight">YouRats</span>
+        <span className="font-semibold tracking-tight">yourATS</span>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button
