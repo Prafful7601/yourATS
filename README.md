@@ -1,10 +1,16 @@
 # yourATS
 
 A multi-tenant SaaS **Applicant Tracking System**. Companies sign up, create an
-organization with a unique slug, and manage hiring at `yourats.com/[org]/…` —
+organization with a unique slug, and manage hiring at `yourats.online/[org]/…` —
 job postings with custom pipeline stages, a drag-and-drop candidate Kanban
 board, candidate profiles, notes, scorecards, and AI-assisted resume parsing and
-match scoring. Candidates apply publicly at `yourats.com/careers/[org]`.
+match scoring. Candidates apply publicly at `yourats.online/careers/[org]`.
+
+## Documentation
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — full deep-dive: stack rationale, build
+  journey, RLS model, AI layer, key decisions, and bugs caught.
+- **[GUIDE.md](GUIDE.md)** — how to use the app, end to end.
 
 ## Stack
 
