@@ -19,11 +19,22 @@ alter table public.application_notes enable row level security;
 alter table public.scorecards        enable row level security;
 
 -- ----------------------------------------------------------------------------
--- profiles: a user manages only their own profile; members of a shared org can
--- read each other's profiles (handled at the app layer via joins / service).
+-- profiles: a user manages only their own profile, and can read the profiles
+-- of anyone they share an organization with (for member lists, note/scorecard
+-- author names, avatars). SECURITY DEFINER avoids recursive RLS on org_members.
 -- ----------------------------------------------------------------------------
-create policy "profiles_select_own" on public.profiles
-  for select using (id = auth.uid());
+create or replace function public.shares_org_with(target uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1
+    from public.org_members m_self
+    join public.org_members m_other on m_self.org_id = m_other.org_id
+    where m_self.user_id = auth.uid() and m_other.user_id = target
+  );
+$$;
+
+create policy "profiles_select_member" on public.profiles
+  for select using (id = auth.uid() or public.shares_org_with(id));
 
 create policy "profiles_update_own" on public.profiles
   for update using (id = auth.uid()) with check (id = auth.uid());
