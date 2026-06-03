@@ -80,24 +80,36 @@ export function AIPanel({
       return;
     }
     setUploading(true);
-    // Extract text first (best-effort), so the recruiter can Parse it.
+    // Extract text first (best-effort) so we can parse + score it.
+    let text = "";
     try {
-      const text = await extractPdfText(file);
+      text = await extractPdfText(file);
       if (text) setResume(text);
     } catch {
-      toast.message("Uploaded — couldn't auto-read the PDF, paste text to parse.");
+      // image-only/scanned PDF — we'll still store the file
     }
     // Upload the file to storage and save it on the candidate.
     const fd = new FormData();
     fd.set("file", file);
     const res = await uploadResume(slug, jobId, appId, candidateId, fd);
-    setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
-    if (res.error) toast.error(res.error);
-    else {
-      toast.success("Résumé uploaded.");
+    if (res.error) {
+      setUploading(false);
+      toast.error(res.error);
+      return;
+    }
+    // Auto parse + score from the extracted text (hands-free).
+    if (text.trim()) {
+      try {
+        await processResume(text);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "AI request failed after upload.");
+      }
+    } else {
+      toast.message("Résumé uploaded — couldn't read text (scanned PDF?). Paste text to score.");
       router.refresh();
     }
+    setUploading(false);
   }
 
   async function callAi<T>(action: string, payload: object): Promise<T> {
@@ -113,55 +125,46 @@ export function AIPanel({
     return res.json() as Promise<T>;
   }
 
-  function parseAndSave() {
-    if (!resume.trim()) {
-      toast.error("Paste the résumé text first.");
+  // Parse the résumé AND auto-score it against the job, in one pass.
+  async function processResume(text: string) {
+    const parsed = await callAi<ParseResponse>("parse-resume", { text });
+    setParse(parsed);
+    const r1 = await saveResumeParse(slug, jobId, appId, candidateId, parsed.skills, {
+      summary: parsed.summary,
+      email: parsed.email,
+      phone: parsed.phone,
+      raw: text,
+    });
+    if (r1.error) {
+      toast.error(r1.error);
       return;
     }
-    startTransition(async () => {
-      try {
-        const result = await callAi<ParseResponse>("parse-resume", {
-          text: resume,
-        });
-        setParse(result);
-        const res = await saveResumeParse(slug, jobId, appId, candidateId, result.skills, {
-          summary: result.summary,
-          email: result.email,
-          phone: result.phone,
-          raw: resume,
-        });
-        if (res.error) toast.error(res.error);
-        else {
-          toast.success(`Parsed via ${sourceLabel(result.source)} & saved.`);
-          router.refresh();
-        }
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Parsing failed.");
+
+    if (hasJobText) {
+      const m = await callAi<MatchResponse>("match-score", { text, jobText });
+      setMatch(m);
+      const r2 = await saveMatchScore(slug, jobId, appId, m.score);
+      if (r2.error) {
+        toast.error(r2.error);
+        return;
       }
-    });
+      toast.success(`Parsed & scored ${m.score}% (${sourceLabel(m.source)}).`);
+    } else {
+      toast.success("Parsed & saved. Add a job description to auto-score.");
+    }
+    router.refresh();
   }
 
-  function scoreMatch() {
-    const candidateText = resume.trim() || parse?.skills.join(", ") || "";
-    if (!candidateText) {
-      toast.error("Add résumé text to score the match.");
+  function runProcess() {
+    if (!resume.trim()) {
+      toast.error("Paste résumé text or upload a PDF first.");
       return;
     }
     startTransition(async () => {
       try {
-        const result = await callAi<MatchResponse>("match-score", {
-          text: candidateText,
-          jobText,
-        });
-        setMatch(result);
-        const res = await saveMatchScore(slug, jobId, appId, result.score);
-        if (res.error) toast.error(res.error);
-        else {
-          toast.success(`Scored via ${sourceLabel(result.source)} & saved.`);
-          router.refresh();
-        }
+        await processResume(resume);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Scoring failed.");
+        toast.error(e instanceof Error ? e.message : "AI request failed.");
       }
     });
   }
@@ -204,24 +207,16 @@ export function AIPanel({
         placeholder="Paste résumé text, or upload a PDF above to auto-fill…"
         rows={6}
       />
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" disabled={pending} onClick={parseAndSave}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" disabled={pending || uploading} onClick={runProcess}>
           <Sparkles className="size-4" />
-          {pending ? "Working…" : "Parse résumé & save"}
+          {pending ? "Working…" : hasJobText ? "Parse & score résumé" : "Parse résumé"}
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending || !hasJobText}
-          onClick={scoreMatch}
-        >
-          Score match
-        </Button>
-        {!hasJobText && (
-          <span className="self-center text-xs text-muted-foreground">
-            Add a job description to enable match scoring.
-          </span>
-        )}
+        <span className="self-center text-xs text-muted-foreground">
+          {hasJobText
+            ? "Uploading a PDF parses & scores automatically."
+            : "Add a job description to auto-score on parse."}
+        </span>
       </div>
 
       {parse && (
