@@ -19,7 +19,7 @@ export async function updateSession(request: NextRequest) {
   // Not configured yet (e.g. before .env.local is filled in): pass through so
   // the app still renders instead of throwing on every request.
   if (!url || !anonKey) {
-    return { supabaseResponse, user: null }
+    return { supabaseResponse, user: null, supabase: null }
   }
 
   const supabase = createServerClient<Database>(
@@ -47,5 +47,5 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  return { supabaseResponse, user }
+  return { supabaseResponse, user, supabase }
 }
