@@ -60,7 +60,18 @@ export default async function JobDetailPage({
             </Badge>
           </div>
         </div>
-        <DeleteJobButton slug={org.slug} jobId={job.id} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            render={
+              <Link href={`/${org.slug}/jobs/${job.id}/board`}>
+                Open pipeline board
+              </Link>
+            }
+          />
+          <DeleteJobButton slug={org.slug} jobId={job.id} />
+        </div>
       </div>
 
       <div className="grid gap-6">
