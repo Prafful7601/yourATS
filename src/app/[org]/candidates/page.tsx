@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { requireOrgMembership } from "@/lib/supabase/org";
 import { formatDistanceToNow } from "date-fns";
 
@@ -55,9 +57,10 @@ export default async function CandidatesPage({
               ? c.applications.length
               : 0;
             return (
-              <div
+              <Link
                 key={c.id}
-                className="flex items-center gap-3 rounded-lg border bg-card p-4"
+                href={`/${org.slug}/candidates/${c.id}`}
+                className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
               >
                 <Avatar className="size-9">
                   <AvatarFallback>{initials(c.full_name)}</AvatarFallback>
@@ -79,7 +82,7 @@ export default async function CandidatesPage({
                     })}
                   </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

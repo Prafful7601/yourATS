@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -43,11 +45,19 @@ function initials(name: string) {
   return name.slice(0, 2).toUpperCase();
 }
 
-function CandidateCard({ card, dragging }: { card: Card; dragging?: boolean }) {
+function CandidateCard({
+  card,
+  href,
+  dragging,
+}: {
+  card: Card;
+  href?: string;
+  dragging?: boolean;
+}) {
   return (
     <div
       className={cn(
-        "rounded-md border bg-card p-3 shadow-sm",
+        "group rounded-md border bg-card p-3 shadow-sm",
         dragging && "opacity-50"
       )}
     >
@@ -70,12 +80,22 @@ function CandidateCard({ card, dragging }: { card: Card; dragging?: boolean }) {
             {card.matchScore}%
           </Badge>
         )}
+        {href && (
+          <Link
+            href={href}
+            aria-label={`Open ${card.name}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+          >
+            <ExternalLink className="size-4" />
+          </Link>
+        )}
       </div>
     </div>
   );
 }
 
-function SortableCard({ card }: { card: Card }) {
+function SortableCard({ card, href }: { card: Card; href: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id });
   return (
@@ -86,7 +106,7 @@ function SortableCard({ card }: { card: Card }) {
       {...attributes}
       {...listeners}
     >
-      <CandidateCard card={card} dragging={isDragging} />
+      <CandidateCard card={card} href={href} dragging={isDragging} />
     </div>
   );
 }
@@ -95,10 +115,12 @@ function ColumnView({
   column,
   cardIds,
   cards,
+  hrefBase,
 }: {
   column: { id: string; name: string };
   cardIds: string[];
   cards: Record<string, Card>;
+  hrefBase: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
@@ -116,7 +138,11 @@ function ColumnView({
           )}
         >
           {cardIds.map((id) => (
-            <SortableCard key={id} card={cards[id]} />
+            <SortableCard
+              key={id}
+              card={cards[id]}
+              href={`${hrefBase}/${id}`}
+            />
           ))}
           {cardIds.length === 0 && (
             <p className="px-1 py-6 text-center text-xs text-muted-foreground">
@@ -247,6 +273,7 @@ export function Board({
             column={col}
             cardIds={items[col.id] ?? []}
             cards={cards}
+            hrefBase={`/${slug}/jobs/${jobId}/applications`}
           />
         ))}
       </div>
