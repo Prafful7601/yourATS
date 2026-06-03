@@ -1,5 +1,5 @@
 /**
- * Database types for the YouRats schema.
+ * Database types for the yourATS schema.
  *
  * Hand-written to mirror supabase/schema.sql. Once the Supabase CLI is wired up
  * you can replace this file with generated output:

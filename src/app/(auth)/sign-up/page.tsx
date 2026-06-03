@@ -65,7 +65,7 @@ export default function SignUpPage() {
     <Card>
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>Start hiring with YouRats.</CardDescription>
+        <CardDescription>Start hiring with yourATS.</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="grid gap-4">

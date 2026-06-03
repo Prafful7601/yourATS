@@ -1,4 +1,7 @@
+import { Users } from "lucide-react";
+
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -8,6 +11,7 @@ import {
 } from "@/components/ui/card";
 
 import { CandidatesList, type CandidateRow } from "./candidates-list";
+import { ImportDialog } from "./import-dialog";
 
 export default async function CandidatesPage({
   params,
@@ -43,12 +47,13 @@ export default async function CandidatesPage({
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Candidates</h1>
-        <p className="text-sm text-muted-foreground">
-          Everyone in your talent pool across all jobs.
-        </p>
-      </div>
+      <PageHeader
+        title="Candidates"
+        description="Everyone in your talent pool across all jobs."
+        icon={Users}
+      >
+        <ImportDialog slug={org.slug} />
+      </PageHeader>
 
       {rows.length === 0 ? (
         <Card>

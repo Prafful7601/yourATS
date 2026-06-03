@@ -1,4 +1,7 @@
+import { Settings as SettingsIcon } from "lucide-react";
+
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { PageHeader } from "@/components/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,7 +47,11 @@ export default async function SettingsPage({
 
   return (
     <div className="mx-auto max-w-3xl p-8">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Settings</h1>
+      <PageHeader
+        title="Settings"
+        description="Your workspace configuration and members."
+        icon={SettingsIcon}
+      />
 
       <div className="grid gap-6">
         <Card>
@@ -59,7 +66,7 @@ export default async function SettingsPage({
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Workspace URL</span>
-              <span className="font-medium">yourats.com/{org.slug}</span>
+              <span className="font-medium">yourats.online/{org.slug}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Your role</span>
@@ -75,7 +82,7 @@ export default async function SettingsPage({
                 rel="noreferrer"
                 className="font-medium underline-offset-4 hover:underline"
               >
-                yourats.com{careersUrl}
+                yourats.online{careersUrl}
               </a>
             </div>
           </CardContent>

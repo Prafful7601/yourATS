@@ -1,4 +1,4 @@
-# YouRats
+# yourATS
 
 A multi-tenant SaaS **Applicant Tracking System**. Companies sign up, create an
 organization with a unique slug, and manage hiring at `yourats.com/[org]/…` —

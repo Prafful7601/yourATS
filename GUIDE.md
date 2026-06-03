@@ -1,4 +1,4 @@
-# YouRats — User Guide
+# yourATS — User Guide
 
 How to use the app, end to end. (For setup & deployment, see [README.md](README.md).)
 

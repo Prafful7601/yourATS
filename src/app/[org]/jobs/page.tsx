@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Briefcase, Plus } from "lucide-react";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
 import { STATUS_BADGE } from "@/lib/jobs";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,15 +29,20 @@ export default async function JobsPage({
 
   return (
     <div className="mx-auto max-w-5xl p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Jobs</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your open roles and their pipelines.
-          </p>
-        </div>
-        <Button render={<Link href={`/${org.slug}/jobs/new`}>New job</Link>} />
-      </div>
+      <PageHeader
+        title="Jobs"
+        description="Manage your open roles and their pipelines."
+        icon={Briefcase}
+      >
+        <Button
+          render={
+            <Link href={`/${org.slug}/jobs/new`}>
+              <Plus className="size-4" />
+              New job
+            </Link>
+          }
+        />
+      </PageHeader>
 
       {!jobs || jobs.length === 0 ? (
         <Card>

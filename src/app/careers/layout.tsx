@@ -11,7 +11,7 @@ export default function CareersLayout({
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
         Powered by{" "}
         <Link href="/" className="font-medium hover:underline">
-          YouRats
+          yourATS
         </Link>
       </footer>
     </div>

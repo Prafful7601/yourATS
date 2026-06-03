@@ -13,7 +13,7 @@ export default function AuthLayout({
         <ThemeToggle />
       </div>
       <Link href="/" className="flex items-center gap-2">
-        <span className="text-lg font-semibold tracking-tight">YouRats</span>
+        <span className="text-lg font-semibold tracking-tight">yourATS</span>
       </Link>
       <div className="w-full max-w-sm">{children}</div>
     </div>

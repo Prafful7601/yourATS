@@ -1,5 +1,5 @@
 -- ============================================================================
--- YouRats — Row Level Security
+-- yourATS — Row Level Security
 -- Run this AFTER schema.sql in the Supabase SQL Editor.
 --
 -- Model: every domain row carries an org_id. A user may read/write a row only
