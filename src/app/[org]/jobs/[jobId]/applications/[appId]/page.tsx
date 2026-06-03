@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { AIPanel } from "./ai-panel";
 import { NotesSection, type Note } from "./notes-section";
 import { ScorecardsSection, type Scorecard } from "./scorecards-section";
 
@@ -31,7 +32,7 @@ export default async function ApplicationPage({
   const { data: app } = await supabase
     .from("applications")
     .select(
-      "id, status, match_score, candidate_id, candidates(full_name, email, phone, skills, resume_url), jobs(title), job_stages(name)"
+      "id, status, match_score, candidate_id, candidates(full_name, email, phone, skills, resume_url, parsed_resume), jobs(title, description), job_stages(name)"
     )
     .eq("id", params.appId)
     .eq("org_id", org.id)
@@ -45,8 +46,12 @@ export default async function ApplicationPage({
     phone: string | null;
     skills: string[];
     resume_url: string | null;
+    parsed_resume: { raw?: string } | null;
   };
-  const job = app.jobs as unknown as { title: string } | null;
+  const job = app.jobs as unknown as {
+    title: string;
+    description: string | null;
+  } | null;
   const stage = app.job_stages as unknown as { name: string } | null;
 
   // Notes + scorecards (+ author names via a profiles lookup).
@@ -146,6 +151,23 @@ export default async function ApplicationPage({
       </div>
 
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">Résumé &amp; AI</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AIPanel
+              slug={org.slug}
+              jobId={params.jobId}
+              appId={app.id}
+              candidateId={app.candidate_id}
+              jobText={job?.description ?? ""}
+              hasJobText={Boolean(job?.description?.trim())}
+              initialResume={candidate.parsed_resume?.raw ?? ""}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Scorecards</CardTitle>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
+import type { Database } from "@/lib/supabase/types";
 
 export type ActionResult = { error: string | null };
 
@@ -85,6 +86,54 @@ export async function deleteScorecard(
     .from("scorecards")
     .delete()
     .eq("id", scorecardId);
+  if (error) return { error: error.message };
+
+  revalidateApp(slug, jobId, appId);
+  return { error: null };
+}
+
+// --- AI result persistence ---------------------------------------------------
+
+export async function saveResumeParse(
+  slug: string,
+  jobId: string,
+  appId: string,
+  candidateId: string,
+  skills: string[],
+  parsed: { summary: string; email: string | null; phone: string | null; raw: string }
+): Promise<ActionResult> {
+  const { supabase } = await requireOrgMembership(slug);
+
+  // Merge AI-found contact info without clobbering existing values.
+  const patch: Database["public"]["Tables"]["candidates"]["Update"] = {
+    skills,
+    parsed_resume: { ...parsed, parsed_at: new Date().toISOString() },
+  };
+  if (parsed.email) patch.email = parsed.email;
+  if (parsed.phone) patch.phone = parsed.phone;
+
+  const { error } = await supabase
+    .from("candidates")
+    .update(patch)
+    .eq("id", candidateId);
+  if (error) return { error: error.message };
+
+  revalidateApp(slug, jobId, appId);
+  return { error: null };
+}
+
+export async function saveMatchScore(
+  slug: string,
+  jobId: string,
+  appId: string,
+  score: number
+): Promise<ActionResult> {
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  const { supabase } = await requireOrgMembership(slug);
+  const { error } = await supabase
+    .from("applications")
+    .update({ match_score: clamped })
+    .eq("id", appId);
   if (error) return { error: error.message };
 
   revalidateApp(slug, jobId, appId);
