@@ -14,12 +14,15 @@ export async function middleware(request: NextRequest) {
   const isRoot = pathname === "/"
   const isAuthPage = AUTH_PAGES.includes(pathname)
   const isOnboarding = pathname === "/onboarding"
+  // Password-reset flow: needs a session (for update) but not org membership.
+  const isAuthFlow =
+    pathname === "/reset-password" || pathname === "/update-password"
   const isPublic =
     isRoot || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
 
   // ----- Unauthenticated -----
   if (!user) {
-    if (isAuthPage || isPublic) return supabaseResponse
+    if (isAuthPage || isPublic || isAuthFlow) return supabaseResponse
     // Protected route (onboarding or an /[org]/* workspace) -> sign in.
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = "/sign-in"
@@ -46,6 +49,9 @@ export async function middleware(request: NextRequest) {
     const target = firstSlug ? `/${firstSlug}/dashboard` : "/onboarding"
     return NextResponse.redirect(new URL(target, request.url))
   }
+
+  // Let the reset/update-password pages render regardless of org membership.
+  if (isAuthFlow) return supabaseResponse
 
   // Signed in without any org -> must onboard first.
   if (!firstSlug && !isOnboarding && !isPublic) {
