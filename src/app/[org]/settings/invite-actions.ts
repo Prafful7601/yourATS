@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
 import { sendEmail } from "@/lib/email";
+import { getBaseUrl } from "@/lib/url";
 import type { OrgRole } from "@/lib/supabase/types";
 
 export type InviteState = {
@@ -60,9 +61,7 @@ export async function createInvite(
     return { error: error?.message ?? "Could not create the invite." };
   }
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
-  const link = `${appUrl}/invite/${invite.id}`;
+  const link = `${getBaseUrl()}/invite/${invite.id}`;
 
   // Best-effort email; the UI shows the link regardless.
   const emailed = await sendEmail({

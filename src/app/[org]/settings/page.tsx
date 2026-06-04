@@ -1,6 +1,7 @@
 import { Settings as SettingsIcon } from "lucide-react";
 
 import { requireOrgMembership } from "@/lib/supabase/org";
+import { getBaseUrl } from "@/lib/url";
 import { PageHeader } from "@/components/page-header";
 import { InviteMembers } from "./invite-members";
 import { MembersManager } from "./members-manager";
@@ -41,7 +42,7 @@ export default async function SettingsPage({
   // Pending invites (owners/admins only). Guarded so Settings still loads if
   // the org_invitations table hasn't been migrated yet.
   const canInvite = role === "owner" || role === "admin";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
+  const appUrl = getBaseUrl();
   let pendingInvites: {
     id: string;
     email: string;
